@@ -1,11 +1,11 @@
 """
 エラーハンドリングモジュール
-統一的なエラー処理を提供するユーティリティ
+統一的なエラー処理を提供するユーティリティ 修正
 """
 
 import streamlit as st
 from enum import Enum
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Dict, List  # Dictを追加
 import logging
 import traceback
 from functools import wraps
