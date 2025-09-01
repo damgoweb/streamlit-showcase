@@ -1,6 +1,6 @@
 """
 Streamlit UIコンポーネントショーケース
-メインアプリケーション - ユーティリティ統合版!
+メインアプリケーション - お気に入り機能修正版
 """
 
 import streamlit as st
@@ -78,14 +78,39 @@ def render_sidebar():
         # お気に入り
         st.divider()
         st.subheader("⭐ お気に入り")
+        
+        # お気に入りリストを取得（最新の状態）
         favorites = state_manager.get_favorites()
+        
+        # お気に入り専用ビューボタン
+        if favorites:
+            if st.button("📌 お気に入りを表示", use_container_width=True):
+                state_manager.set('view_mode', 'favorites')
+                st.rerun()
+        
         if favorites:
             for fav in favorites[:5]:
-                st.caption(f"• {fav}")
+                col1, col2, col3 = st.columns([3, 1, 1])
+                with col1:
+                    # クリック可能なリンクとして表示
+                    if st.button(f"📍 {fav}", key=f"goto_{fav}", use_container_width=True):
+                        state_manager.set('current_component', fav)
+                        state_manager.set('view_mode', 'component')
+                        st.rerun()
+                with col2:
+                    # コードをコピー
+                    if st.button("📋", key=f"copy_{fav}", help="コードをコピー"):
+                        st.success("📋")
+                with col3:
+                    if st.button("❌", key=f"remove_fav_{fav}", help=f"{fav}を削除"):
+                        state_manager.toggle_favorite(fav)
+                        st.rerun()
+            
             if len(favorites) > 5:
                 st.caption(f"他 {len(favorites) - 5} 件...")
         else:
             st.caption("お気に入りはまだありません")
+            st.caption("コンポーネントの⭐ボタンで追加")
         
         # 統計情報
         st.divider()
@@ -119,12 +144,29 @@ def render_sidebar():
             
             if st.button("エラーレポート"):
                 error_handler.display_error_report()
+            
+            # 現在のお気に入りを表示
+            st.caption("現在のお気に入り:")
+            st.json(favorites)
 
 def render_main_content():
     """メインコンテンツのレンダリング"""
     selected_category = state_manager.get('current_category', 'input_widgets')
     search_query = state_manager.get('search_query', '')
+    view_mode = state_manager.get('view_mode', 'normal')
+    current_component = state_manager.get('current_component', None)
     
+    # お気に入りビューモード
+    if view_mode == 'favorites':
+        render_favorites_view()
+        return
+    
+    # 特定コンポーネントビューモード
+    if view_mode == 'component' and current_component:
+        render_component_view(current_component)
+        return
+    
+    # 通常のカテゴリビュー
     # カテゴリ情報
     category_info = COMPONENT_CATEGORIES.get(selected_category, {})
     
@@ -163,6 +205,168 @@ def render_main_content():
     with tab4:
         render_documentation_tab(selected_category)
 
+def render_favorites_view():
+    """お気に入り専用ビュー"""
+    # ヘッダー
+    col1, col2 = st.columns([10, 1])
+    with col1:
+        st.title("⭐ お気に入りコンポーネント")
+    with col2:
+        if st.button("✖️", help="閉じる"):
+            state_manager.set('view_mode', 'normal')
+            st.rerun()
+    
+    favorites = state_manager.get_favorites()
+    
+    if not favorites:
+        st.info("お気に入りに登録されたコンポーネントはありません")
+        if st.button("🏠 ホームに戻る"):
+            state_manager.set('view_mode', 'normal')
+            st.rerun()
+        return
+    
+    # お気に入りをグリッド表示
+    cols = st.columns(3)
+    for idx, fav in enumerate(favorites):
+        with cols[idx % 3]:
+            with st.container():
+                st.markdown(f"### 📌 {fav}")
+                
+                # コンポーネントのプレビュー（簡易版）
+                if fav == "text_input":
+                    preview = st.text_input("プレビュー", "サンプル", key=f"preview_{fav}")
+                elif fav == "number_input":
+                    preview = st.number_input("プレビュー", value=100, key=f"preview_{fav}")
+                else:
+                    st.info("プレビュー準備中")
+                
+                # アクションボタン
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    if st.button("開く", key=f"open_{fav}"):
+                        state_manager.set('current_component', fav)
+                        state_manager.set('view_mode', 'component')
+                        st.rerun()
+                with col2:
+                    if st.button("コード", key=f"code_{fav}"):
+                        st.code(f"st.{fav}()")
+                with col3:
+                    if st.button("削除", key=f"del_{fav}"):
+                        state_manager.toggle_favorite(fav)
+                        st.rerun()
+                
+                st.divider()
+
+def render_component_view(component_name: str):
+    """特定コンポーネントの詳細ビュー"""
+    # ヘッダー
+    col1, col2, col3 = st.columns([8, 1, 1])
+    with col1:
+        st.title(f"📍 {component_name}")
+    with col2:
+        if st.button("⭐", help="お気に入り切り替え"):
+            state_manager.toggle_favorite(component_name)
+            st.rerun()
+    with col3:
+        if st.button("✖️", help="閉じる"):
+            state_manager.set('view_mode', 'normal')
+            state_manager.set('current_component', None)
+            st.rerun()
+    
+    # コンポーネント詳細
+    tabs = st.tabs(["デモ", "コード", "ドキュメント", "例"])
+    
+    with tabs[0]:
+        st.subheader("🎮 インタラクティブデモ")
+        if component_name == "text_input":
+            # パラメータ設定
+            with st.expander("⚙️ パラメータ設定", expanded=True):
+                label = st.text_input("ラベル", "テキストを入力")
+                value = st.text_input("デフォルト値", "")
+                max_chars = st.number_input("最大文字数", min_value=1, value=100)
+                placeholder = st.text_input("プレースホルダー", "ここに入力...")
+                help_text = st.text_input("ヘルプテキスト", "説明文")
+            
+            # デモ実行
+            st.subheader("実行結果")
+            result = st.text_input(
+                label,
+                value=value,
+                max_chars=max_chars,
+                placeholder=placeholder,
+                help=help_text
+            )
+            st.success(f"入力値: {result}")
+            
+        elif component_name == "number_input":
+            # パラメータ設定
+            with st.expander("⚙️ パラメータ設定", expanded=True):
+                label = st.text_input("ラベル", "数値を入力")
+                min_value = st.number_input("最小値", value=0)
+                max_value = st.number_input("最大値", value=100)
+                value = st.number_input("デフォルト値", min_value=min_value, max_value=max_value, value=50)
+                step = st.number_input("ステップ", value=1)
+            
+            # デモ実行
+            st.subheader("実行結果")
+            result = st.number_input(
+                label,
+                min_value=min_value,
+                max_value=max_value,
+                value=value,
+                step=step
+            )
+            st.success(f"入力値: {result}")
+    
+    with tabs[1]:
+        st.subheader("💻 コード生成")
+        # コード生成ロジック
+        if component_name == "text_input":
+            code = """import streamlit as st
+
+result = st.text_input(
+    label="テキストを入力",
+    value="",
+    max_chars=100,
+    placeholder="ここに入力...",
+    help="説明文"
+)
+
+st.write(f"入力値: {result}")"""
+        else:
+            code = f"st.{component_name}()"
+        
+        st.code(code, language="python")
+        if st.button("📋 コピー"):
+            st.success("コピーしました！")
+    
+    with tabs[2]:
+        st.subheader("📚 ドキュメント")
+        st.markdown(f"""
+        ### st.{component_name}
+        
+        このコンポーネントの詳細な説明...
+        
+        **パラメータ:**
+        - `label`: 表示ラベル
+        - `value`: デフォルト値
+        - その他...
+        """)
+    
+    with tabs[3]:
+        st.subheader("💡 使用例")
+        st.code(f"""
+# 例1: 基本的な使い方
+result = st.{component_name}("ラベル")
+
+# 例2: オプション付き
+result = st.{component_name}(
+    "ラベル",
+    value="デフォルト",
+    help="ヘルプテキスト"
+)
+        """)
+
 def render_demo_tab(category: str):
     """デモタブのレンダリング"""
     st.subheader("コンポーネントデモ")
@@ -173,25 +377,51 @@ def render_demo_tab(category: str):
         
         with col1:
             st.markdown("### Text Input")
+            
+            # お気に入り状態を確認
+            is_favorite_text = state_manager.is_favorite("text_input")
+            
+            # お気に入りボタン（状態に応じてアイコンを変更）
+            fav_button_label = "⭐ お気に入りから削除" if is_favorite_text else "⭐ お気に入りに追加"
+            
+            if st.button(fav_button_label, key="fav_text_input"):
+                if state_manager.toggle_favorite("text_input"):
+                    st.success("✅ お気に入りに追加しました")
+                else:
+                    st.info("ℹ️ お気に入りから削除しました")
+                st.rerun()  # 画面を更新してサイドバーに反映
+            
+            # コンポーネントのデモ
             text_value = st.text_input("名前を入力", "太郎")
             st.write(f"入力値: {text_value}")
             
             # 閲覧回数をカウント
-            state_manager.increment_view_count("text_input")
-            
-            # お気に入りボタン
-            if st.button("⭐ お気に入りに追加", key="fav_text_input"):
-                if state_manager.toggle_favorite("text_input"):
-                    st.success("お気に入りに追加しました")
-                else:
-                    st.info("お気に入りから削除しました")
+            view_count = state_manager.increment_view_count("text_input")
+            st.caption(f"閲覧回数: {view_count}")
         
         with col2:
             st.markdown("### Number Input")
+            
+            # お気に入り状態を確認
+            is_favorite_number = state_manager.is_favorite("number_input")
+            
+            # お気に入りボタン
+            fav_button_label = "⭐ お気に入りから削除" if is_favorite_number else "⭐ お気に入りに追加"
+            
+            if st.button(fav_button_label, key="fav_number_input"):
+                if state_manager.toggle_favorite("number_input"):
+                    st.success("✅ お気に入りに追加しました")
+                else:
+                    st.info("ℹ️ お気に入りから削除しました")
+                st.rerun()  # 画面を更新
+            
+            # コンポーネントのデモ
             number_value = st.number_input("年齢を入力", min_value=0, max_value=120, value=30)
             st.write(f"入力値: {number_value}")
             
-            state_manager.increment_view_count("number_input")
+            # 閲覧回数をカウント
+            view_count = state_manager.increment_view_count("number_input")
+            st.caption(f"閲覧回数: {view_count}")
     
     elif category == "select_widgets":
         st.info("🚧 選択ウィジェットのデモは準備中です")
@@ -220,6 +450,14 @@ def render_sample_data_tab():
             days = st.slider("日数", 7, 90, 30)
             if st.button("生成", key="gen_ts"):
                 st.session_state.sample_ts = sample_data.generate_time_series(days=days)
+        
+        elif data_type == "JSON":
+            if st.button("生成", key="gen_json"):
+                st.session_state.sample_json = sample_data.generate_json_data()
+        
+        elif data_type == "メトリクス":
+            if st.button("生成", key="gen_metrics"):
+                st.session_state.sample_metrics = sample_data.generate_metrics_data()
     
     with col2:
         if data_type == "DataFrame" and 'sample_df' in st.session_state:
@@ -235,6 +473,22 @@ def render_sample_data_tab():
         elif data_type == "時系列" and 'sample_ts' in st.session_state:
             st.line_chart(st.session_state.sample_ts.set_index('Date')['Value'])
             st.dataframe(st.session_state.sample_ts.head())
+        
+        elif data_type == "JSON" and 'sample_json' in st.session_state:
+            st.json(st.session_state.sample_json)
+        
+        elif data_type == "メトリクス" and 'sample_metrics' in st.session_state:
+            metrics = st.session_state.sample_metrics
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("収益", metrics["revenue"]["value"], metrics["revenue"]["delta"])
+            with col2:
+                st.metric("ユーザー数", metrics["users"]["value"], metrics["users"]["delta"])
+            with col3:
+                st.metric("コンバージョン", metrics["conversion"]["value"], metrics["conversion"]["delta"])
+            with col4:
+                st.metric("満足度", metrics["satisfaction"]["value"], metrics["satisfaction"]["delta"])
 
 def render_code_examples_tab(category: str):
     """コード例タブのレンダリング"""
