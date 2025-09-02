@@ -1,0 +1,205 @@
+{
+  "components": [
+    {
+      "id": "text_input",
+      "name": "st.text_input",
+      "category": "input_widgets",
+      "subcategory": "text",
+      "description": "単一行のテキスト入力フィールド",
+      "difficulty": "beginner",
+      "parameters": [
+        {
+          "name": "label",
+          "type": "str",
+          "required": true,
+          "description": "入力フィールドのラベル"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "description": "初期値"
+        },
+        {
+          "name": "max_chars",
+          "type": "int",
+          "required": false,
+          "default": null,
+          "description": "最大文字数"
+        },
+        {
+          "name": "key",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "ウィジェットの一意識別子"
+        },
+        {
+          "name": "type",
+          "type": "str",
+          "required": false,
+          "default": "default",
+          "description": "入力タイプ (default/password)"
+        },
+        {
+          "name": "help",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "ヘルプテキスト"
+        },
+        {
+          "name": "autocomplete",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "オートコンプリート設定"
+        },
+        {
+          "name": "placeholder",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "プレースホルダーテキスト"
+        },
+        {
+          "name": "disabled",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "無効化フラグ"
+        },
+        {
+          "name": "label_visibility",
+          "type": "str",
+          "required": false,
+          "default": "visible",
+          "description": "ラベルの表示設定"
+        }
+      ],
+      "examples": [
+        {
+          "title": "基本的な使用例",
+          "code": "name = st.text_input('お名前を入力してください')"
+        },
+        {
+          "title": "デフォルト値付き",
+          "code": "email = st.text_input('Email', value='user@example.com')"
+        },
+        {
+          "title": "パスワード入力",
+          "code": "password = st.text_input('Password', type='password')"
+        },
+        {
+          "title": "文字数制限付き",
+          "code": "username = st.text_input('Username', max_chars=20)"
+        }
+      ],
+      "tips": [
+        "placeholder引数で入力例を表示できます",
+        "max_chars引数で最大文字数を制限できます",
+        "type='password'でパスワード入力フィールドになります",
+        "on_changeコールバックで変更を検知できます"
+      ],
+      "related": ["text_area", "chat_input", "number_input"],
+      "version_added": "0.1.0",
+      "tags": ["form", "input", "text", "basic"]
+    },
+    {
+      "id": "text_area",
+      "name": "st.text_area",
+      "category": "input_widgets",
+      "subcategory": "text",
+      "description": "複数行のテキスト入力フィールド",
+      "difficulty": "beginner",
+      "parameters": [
+        {
+          "name": "label",
+          "type": "str",
+          "required": true,
+          "description": "テキストエリアのラベル"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "description": "初期値"
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "required": false,
+          "default": null,
+          "description": "高さ（ピクセル）"
+        },
+        {
+          "name": "max_chars",
+          "type": "int",
+          "required": false,
+          "default": null,
+          "description": "最大文字数"
+        },
+        {
+          "name": "key",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "ウィジェットの一意識別子"
+        },
+        {
+          "name": "help",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "ヘルプテキスト"
+        },
+        {
+          "name": "placeholder",
+          "type": "str",
+          "required": false,
+          "default": null,
+          "description": "プレースホルダーテキスト"
+        },
+        {
+          "name": "disabled",
+          "type": "bool",
+          "required": false,
+          "default": false,
+          "description": "無効化フラグ"
+        },
+        {
+          "name": "label_visibility",
+          "type": "str",
+          "required": false,
+          "default": "visible",
+          "description": "ラベルの表示設定"
+        }
+      ],
+      "examples": [
+        {
+          "title": "基本的な使用例",
+          "code": "comment = st.text_area('コメントを入力')"
+        },
+        {
+          "title": "高さ指定",
+          "code": "description = st.text_area('説明', height=200)"
+        },
+        {
+          "title": "デフォルト値と文字数制限",
+          "code": "bio = st.text_area('自己紹介', value='ここに自己紹介を...', max_chars=500)"
+        }
+      ],
+      "tips": [
+        "heightパラメータでテキストエリアのサイズを調整できます",
+        "改行を含むテキストの入力が可能です",
+        "value.splitlines()で行ごとに処理できます",
+        "Markdownやコードの入力に適しています"
+      ],
+      "related": ["text_input", "code", "markdown"],
+      "version_added": "0.1.0",
+      "tags": ["form", "input", "text", "multiline", "basic"]
+    }
+  ]
+}
