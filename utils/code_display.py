@@ -276,15 +276,21 @@ class CodeDisplay:
             language: プログラミング言語
             key: ボタンのユニークキー
         """
-        # コード表示
+        # Streamlitのコード表示（最新版では自動的にコピーボタンが付く）
         st.code(code, language=language)
         
-        # コピーボタン
-        button_key = key or "copy_button"
-        if st.button(f"📋 コードをコピー", key=button_key):
-            # クリップボードへのコピーをシミュレート
-            st.success("✅ コードをコピーしました！")
-            st.info("Ctrl+C (Windows/Linux) または Cmd+C (Mac) でもコピーできます。")
+        # 追加オプション：ダウンロードボタン
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            st.download_button(
+                label="📥 ダウンロード",
+                data=code,
+                file_name=f"code_{key}.py" if key else "code.py",
+                mime="text/plain",
+                key=f"download_{key}" if key else None
+            )
+        with col2:
+            st.caption("💡 コードブロック右上のボタンでコピー、または左のボタンでダウンロード")
     
     def create_download_button(self,
                              code: str,
